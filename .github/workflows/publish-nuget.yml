@@ -20,7 +20,7 @@ jobs:
           dotnet-version: '8.0.x'  # Or your target version
 
       - name: Install Nerdbank.GitVersioning
-        run: dotnet add package Nerdbank.GitVersioning --version 3.7.115
+        run: dotnet tool install --global nbgv --version 3.7.115
 
       - name: Get NBGV version
         id: nbgv
