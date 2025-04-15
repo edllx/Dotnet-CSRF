@@ -1,0 +1,47 @@
+name: Publish NuGet
+
+on:
+  push:
+    branches: [ main ]  # Trigger on commits to main (to auto-tag)
+    tags: [ v* ]        # Also trigger on tags (for publishing)
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Required for Git history
+
+      # Step added: Setup .NET SDK before using dotnet commands
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'  # Or your target version
+
+      - name: Install Nerdbank.GitVersioning
+        run: dotnet add package Nerdbank.GitVersioning --version 3.7.115
+
+      - name: Get NBGV version
+        id: nbgv
+        run: |
+          echo "VERSION=$(nbgv get-version -v SemVer2)" >> $GITHUB_OUTPUT
+          echo "TAG=v$(nbgv get-version -v SemVer2)" >> $GITHUB_OUTPUT
+
+      - name: Auto-tag if [version:*] detected
+        if: contains(github.event.head_commit.message, '[version:') && github.ref == 'refs/heads/main'
+        run: |
+          git tag ${{ steps.nbgv.outputs.TAG }}
+          git push origin ${{ steps.nbgv.outputs.TAG }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Pack
+        if: github.event_name == 'push' && (contains(github.event.head_commit.message, '[version:') || startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          dotnet build -c Release
+          dotnet pack -c Release --output ./nupkg
+
+      - name: Publish to NuGet
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json

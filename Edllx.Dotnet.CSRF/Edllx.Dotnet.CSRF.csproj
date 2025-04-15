@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <IsPackable>true</IsPackable>  <!-- Marks as publishable package -->
+    <OutputType>Library</OutputType>  <!-- Explicitly declares this as a library -->
+
+    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <Title>Anti Cross-site request forgery (CSRF)</Title>
+    <Authors>Leonyx</Authors>
+    <Description>Library that implement CSRF (Cross-Site Request Forgery) protection for both:
+      ✅ Web APIs.
+      ✅ Blazor Server.
+    </Description>
+    <Copyright>Laurent Etienne 2025</Copyright>
+    <RepositoryUrl>https://github.com/edllx/Dotnet-CSRF</RepositoryUrl>
+    <PackageTags>edllx; csrf</PackageTags>
+    <PackageProjectUrl>https://github.com/edllx/Dotnet-CSRF</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
