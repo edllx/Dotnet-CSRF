@@ -69,6 +69,13 @@ jobs:
           NEW_VERSION=$(semver bump ${{ needs.check.outputs.bump_type }} ${{ steps.get_tag.outputs.CURRENT_VERSION }})
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
+      - name: Create and Push Tag
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git tag -a "v${{ steps.bump_version.outputs.NEW_VERSION }}" -m "Version ${{ steps.bump_version.outputs.NEW_VERSION }}"
+          git push origin "v${{ steps.bump_version.outputs.NEW_VERSION }}"
+
       - name: Build and Pack
         run: |
           dotnet build -c Release
