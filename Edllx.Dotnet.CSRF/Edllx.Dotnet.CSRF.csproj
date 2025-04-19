@@ -10,7 +10,6 @@
     <OutputType>Library</OutputType>  <!-- Explicitly declares this as a library -->
 
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
-    <VersionSuffix>$(VersionSuffix)</VersionSuffix>
     <Title>Anti Cross-site request forgery (CSRF)</Title>
     <Authors>Leonyx</Authors>
     <Description>Library that implement CSRF (Cross-Site Request Forgery) protection for both:
