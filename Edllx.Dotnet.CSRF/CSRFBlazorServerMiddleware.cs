@@ -16,20 +16,27 @@ public class CSRFBlazorServerMiddleware
     IConfiguration configuration = context.RequestServices.GetRequiredService<IConfiguration>();
     string CSRF_COOKIE_NAME =configuration["CSRF_COOKIE_NAME"]??throw new Exception("Missing configuration CSRF_COOKIE_NAME"); 
     string CSRF_HEADER_NAME =configuration["CSRF_HEADER_NAME"]??throw new Exception("Missing configuration CSRF_HEADER_NAME"); 
+    string? DOMAIN = configuration["DOMAIN"]; 
 
     var (cookieToken, requestToken) = _csrfService.GenerateTokens();
 
     if (ShouldValidate(context))
     {
+      CookieOptions options =  new(){
+        HttpOnly = true,
+                 Secure = true,
+                 SameSite = SameSiteMode.None
+      }; 
+
+      if (!String.IsNullOrEmpty(DOMAIN)){
+        options.Domain = DOMAIN;
+      }
+
       context.Response.Cookies.Append(
           CSRF_COOKIE_NAME,
           cookieToken,
-          new CookieOptions
-          {
-          HttpOnly = true,
-          Secure = true,
-          SameSite = SameSiteMode.Strict
-          });
+          options
+          );
     }
     string cookie = context.Request.Cookies[CSRF_COOKIE_NAME] ?? "";
     context.Items[CSRF_HEADER_NAME] = _csrfService.ComputeHmac(cookie);
