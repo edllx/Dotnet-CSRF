@@ -5,11 +5,11 @@ on:
     branches: [ main ]  # Trigger on commits to main (to auto-tag)
 
 jobs:
-  check_version:
+  check:
     runs-on: ubuntu-latest
     outputs:
-      should_skip: ${{ check_version.extract_bump.outputs.SKIP_BUMP }}
-      bump_type: ${{ check_version.extract_bump.outputs.BUMP_TYPE }}
+      should_skip: ${{ steps.extract_bump.outputs.SKIP_BUMP }}
+      bump_type: ${{ steps.extract_bump.outputs.BUMP_TYPE }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,8 +27,8 @@ jobs:
           fi
 
   push-verion:
-    needs: check_version
-    if: ${{ !needs.check_version.outputs.should_skip }}
+    needs: check
+    if: ${{ !needs.check.outputs.should_skip }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -66,7 +66,7 @@ jobs:
       - name: Calculate Version
         id: bump_version
         run: |
-          NEW_VERSION=$(semver bump ${{ needs.check_version.outputs.bump_type }} ${{ steps.get_tag.outputs.CURRENT_VERSION }})
+          NEW_VERSION=$(semver bump ${{ needs.check.outputs.bump_type }} ${{ steps.get_tag.outputs.CURRENT_VERSION }})
           echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Build and Pack
