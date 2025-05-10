@@ -26,7 +26,6 @@ public class CSRFService
     return (cookieToken, requestToken);
   }
 
-
   internal bool ValidateTokens(string cookieToken, string requestToken)
   {
     if (string.IsNullOrEmpty(cookieToken) || string.IsNullOrEmpty(requestToken)){return false;}

@@ -1,5 +1,6 @@
 namespace edllx.dotnet.csrf;
 // Middleware
+
 public class CSRFBlazorServerMiddleware
 {
   private readonly RequestDelegate _next;
@@ -69,5 +70,4 @@ public static class CSRFBlazorServerBuilderExtensions
       throw new InvalidOperationException("Unable to find the required services. [ CSRFService ]");
     }
   }
-
 }
