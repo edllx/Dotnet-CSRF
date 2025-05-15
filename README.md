@@ -7,6 +7,8 @@ This implementation enables Cross-Site Request Forgery (CSRF) protection using t
 Configure CSRF in your Blazor Server app by registering the CSRFService:
 
 ```c#
+builder.Services.AddSingleton(typeof(Program).Assembly);
+
 builder.Services.AddSingleton<CSRFService>(s =>
 {
     return new CSRFService(secretKey, tokenName, cookieName, domain);
