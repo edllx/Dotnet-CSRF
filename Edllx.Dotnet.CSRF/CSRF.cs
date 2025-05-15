@@ -62,7 +62,7 @@ public class CSRFService
 }
 
 // Attribure
-[AttributeUsage(AttributeTargets.Class)]
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
 public class RequireCSRF() : Attribute
 {
 }
