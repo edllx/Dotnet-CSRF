@@ -1,3 +1,7 @@
+using System.Reflection;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Components;
+
 namespace edllx.dotnet.csrf;
 // Middleware
 
@@ -6,49 +10,84 @@ public class CSRFBlazorServerMiddleware
   private readonly RequestDelegate _next;
   private readonly CSRFService _csrfService;
 
-  public CSRFBlazorServerMiddleware(RequestDelegate next, CSRFService csrfService)
+  private List<string> _protected_routes { get; }
+
+  public CSRFBlazorServerMiddleware(RequestDelegate next, Assembly assembly, CSRFService csrfService)
   {
     _next = next;
     _csrfService = csrfService;
+    _protected_routes = assembly.GetTypes()
+      .SelectMany(t => t.GetCustomAttributes<RouteAttribute>())
+      .Select(attr => attr.Template)
+      .Distinct()
+      .ToList();
+
+    _protected_routes.Remove("/404");
+    _protected_routes.Remove("/Error");
+
   }
 
-  public async Task Invoke(HttpContext context)
+  public Task Invoke(HttpContext context)
   {
-    IConfiguration configuration = context.RequestServices.GetRequiredService<IConfiguration>();
-    string CSRF_COOKIE_NAME =configuration["CSRF_COOKIE_NAME"]??throw new Exception("Missing configuration CSRF_COOKIE_NAME"); 
-    string CSRF_HEADER_NAME =configuration["CSRF_HEADER_NAME"]??throw new Exception("Missing configuration CSRF_HEADER_NAME"); 
-    string? DOMAIN = configuration["DOMAIN"]; 
+
+    Endpoint? endpoint = context.GetEndpoint();
+    if (endpoint is null)
+    {
+      return _next(context);
+    }
+
+    string name_path = endpoint.DisplayName ?? "";
+
+    if (string.IsNullOrEmpty(name_path))
+    {
+      return handleSecondaryRequest(context);
+    }
+
+    string[] parts = name_path.Split(' ');
+
+    if (!_protected_routes.Any(val =>
+    {
+      bool success = Regex.Match(val, $@"{parts.First()}$").Success;
+      return success;
+    }))
+    {
+      return _next(context);
+    }
+
+    return HandleProtectedRoute(context);
+  }
+
+  private Task HandleProtectedRoute(HttpContext context)
+  {
 
     var (cookieToken, requestToken) = _csrfService.GenerateTokens();
-
-    if (ShouldValidate(context))
+    CookieOptions options = new()
     {
-      CookieOptions options =  new(){
-        HttpOnly = true,
-                 Secure = true,
-                 SameSite = SameSiteMode.None
-      }; 
+      HttpOnly = true,
+      Secure = true,
+      SameSite = SameSiteMode.None
+    };
 
-      if (!String.IsNullOrEmpty(DOMAIN)){
-        options.Domain = DOMAIN;
-      }
-
-      context.Response.Cookies.Append(
-          CSRF_COOKIE_NAME,
-          cookieToken,
-          options
-          );
+    if (!String.IsNullOrEmpty(_csrfService.DOMAIN))
+    {
+      options.Domain = _csrfService.DOMAIN;
     }
-    string cookie = context.Request.Cookies[CSRF_COOKIE_NAME] ?? "";
-    context.Items[CSRF_HEADER_NAME] = _csrfService.ComputeHmac(cookie);
 
-    await _next(context);
+    context.Response.Cookies.Append(
+      _csrfService.CookieName,
+      cookieToken,
+      options
+    );
+
+    context.Items[_csrfService.TokenName] = requestToken;
+    return _next(context);
   }
 
-  private bool ShouldValidate(HttpContext context)
+  private Task handleSecondaryRequest(HttpContext context)
   {
-    var endpoint = context.GetEndpoint();
-    return endpoint?.Metadata.GetMetadata<RequireCSRF>() != null;
+    string cookie = context.Request.Cookies[_csrfService.CookieName] ?? "";
+    context.Items[_csrfService.TokenName] = _csrfService.ComputeHmac(cookie);
+    return _next(context);
   }
 }
 

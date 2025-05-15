@@ -1,7 +1,7 @@
 namespace edllx.dotnet.csrf;
 
 // Middleware
-public class CSRFWebAppMiddleware 
+public class CSRFWebAppMiddleware
 {
   private readonly RequestDelegate _next;
   private readonly CSRFService _csrfService;
@@ -17,7 +17,7 @@ public class CSRFWebAppMiddleware
     if (ShouldValidate(context))
     {
       string cookieToken = context.Request.Cookies[_csrfService.CookieName] ?? "";
-      string headerToken = context.Request.Headers[_csrfService.TokenName].FirstOrDefault() ?? "" ;
+      string headerToken = context.Request.Headers[_csrfService.TokenName].FirstOrDefault() ?? "";
 
       if (!_csrfService.ValidateTokens(cookieToken, headerToken))
       {
